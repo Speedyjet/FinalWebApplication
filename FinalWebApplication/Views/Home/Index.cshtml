@@ -1,0 +1,219 @@
+﻿@using FinalWebApplication.Models
+@using GridMvc.Html
+@{
+    ViewBag.Title = "My web application";
+    Layout = "../Shared/_Layout.cshtml";
+}
+
+<script>
+    var id = 0;
+
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+   function HideEditPanel() {
+        id = 0;
+        $('#tbName').val('');
+        $('#tbPosition').val('');
+        $('#tbSalary').val(0);
+        $('#cbStatus').val(false);
+ }
+
+   function NewPagePanel() {
+    
+        id = 0;
+        
+        $('#tbName').val('');
+        $('#tbPosition').val('');
+        $('#tbSalary').val(0);
+        $('#cbStatus').val(false);
+    }
+
+    function LoadEdit(pId) {
+        id = pId;
+        $.ajax({
+            url: "../api/webapi/LoadEdit",
+            data: JSON.stringify(id),
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            success: function(data) {
+                if (data != null) {
+                  
+                    $('#tbName').val(data.Data.name);
+                    $('#tbPosition').val(data.Data.position);
+                    $('#tbSalary').val(data.Data.salary);
+                     $('#cbStatus').prop("checked", data.Data.status);
+                    
+                }
+                return false;
+            }
+        });
+    }
+
+    function Save() {
+       
+        var dataJSON = {
+            EmployeeID: id.toString(),
+            Name: $('#tbName').val(),
+            Position: $('#tbPosition').val(),
+            Salary:  $('#tbSalary').val(),
+            Status: $('#cbStatus').is(":checked")
+        };
+
+        $.ajax({
+            url: "../api/webapi/Save",
+            data: JSON.stringify(dataJSON),
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            success: function() {
+                location.reload();
+                return false;
+            }
+        });
+    }
+
+    function WriteTxt() {
+        //id = pId;
+        $.ajax({
+            url: "../api/webapi/TxtWriteResult",
+            //data: JSON.stringify(id),
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            success: function (data) { }
+        });
+    }
+
+    function Delete(pId) {
+        id = pId;
+    }
+
+    function DeleteConfirmed() {
+        $.ajax({
+            url: "../api/webapi/Delete",
+            data: JSON.stringify(id),
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            success: function(data) {
+                location.reload();
+                return false;
+            }
+        });
+    }
+
+</script>
+
+<div style="float: left; ">
+
+    @Html.Grid(ViewData["EmployeeList"] as List<Employee>).Named("emplGrid").Selectable(false).Columns(columns =>
+    {
+        columns.Add(foo => foo.EmployeeID).SetWidth(50).Sortable(true);
+        columns.Add(foo => foo.Name).Titled("Name").SetWidth(50).Sortable(true);
+        columns.Add(foo => foo.Position).Titled("Position").SetWidth(50).Sortable(true);
+        columns.Add(foo => foo.Salary).Titled("Salary").SetWidth(50).Sortable(true);
+        columns.Add(foo => foo.Status).Titled("Status").SetWidth(50).Sortable(true);
+            
+
+        columns.Add()
+            .Encoded(false)
+            .Sanitized(false)
+            .SetWidth(10)
+            .RenderValueAs(d =>
+                @<a style="cursor: pointer;" data-toggle="modal" onclick="NewPagePanel()" data-target="#AddEditModal" ><span class="glyphicon glyphicon-file" aria-hidden="true" data-toggle="tooltip" title="Add new"></span>  </a>);
+        columns.Add()
+            .Encoded(false)
+            .Sanitized(false)
+            .SetWidth(10)
+            .RenderValueAs(d =>
+                @<a style="cursor: pointer;" data-toggle="modal" data-target="#AddEditModal" onclick=" LoadEdit(@d.EmployeeID) "><span class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="tooltip" title="Edit"></span>  </a>);
+
+        columns.Add()
+            .Encoded(false)
+            .Sanitized(false)
+            .SetWidth(10)
+            .RenderValueAs(d =>
+                @<a style="cursor: pointer;" data-toggle="modal" data-target="#DeleteModal" onclick=" Delete(@d.EmployeeID)"><span class="glyphicon glyphicon-trash" aria-hidden="true" data-toggle="tooltip" title="Delete"></span></a>);
+
+    }).WithPaging(10)
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade bs-example-modal-sm" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="DeleteLabel">Delete</h4>
+            </div>
+            <div class="modal-body">
+                Would you like to delete page?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="DeleteConfirmed()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modal -->
+<div class="modal fade bs-example-modal-sm" id="AddEditModal" tabindex="-1" role="dialog" aria-labelledby="AddEditLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="AddEditLabel">Add/Edit</h4>
+            </div>
+            <div class="modal-body">
+                <table>
+                    <tr style="height: 35px; ">
+                        <td style=" width: 180px">
+                            Name
+                        </td>
+                        <td>
+                            @Html.TextBox("TestBoxName", " ", new { id = "tbName" })
+                        </td>
+                    </tr>
+                    <tr style="height: 35px">
+                        <td>
+                            Position
+                        </td>
+                        <td>
+                            @Html.TextBox("TestBoxPosition", " ", new { id = "tbPosition" })
+                        </td>
+                    </tr>
+                    <tr style="height: 35px">
+                        <td>
+                            Salary
+                        </td>
+                        <td>
+                            @Html.TextBox("TestBoxSalary", " ", new { id = "tbSalary" })
+                        </td>
+                    </tr>
+                    <tr style="height: 35px">
+                        <td>
+                            Status
+                        </td>
+                        <td>
+                            @Html.CheckBox("CheckBoxStatus", false, new { id = "cbStatus" })
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="Save()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a style="cursor: pointer;" onclick="WriteTxt()"><span class="glyphicon glyphicon-floppy-save" aria-hidden="true" data-toggle="tooltip" title="Download TXT"></span> </a>
+
